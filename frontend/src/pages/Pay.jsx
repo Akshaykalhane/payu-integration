@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { v4 as uuidv4 } from 'uuid';
 
 const PRODUCTS = [
   { id: 1, name: "Vikas T-Shirt", price: 400 },
@@ -25,7 +26,7 @@ const Pay = () => {
     e.preventDefault();
     if (!selectedProduct) return alert("Please select a product");
 
-    const txnid = `T${Date.now()}`;
+    const txnid = `TN-${uuidv4()}`;
 
     const data = {
       ...formData,

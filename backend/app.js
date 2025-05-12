@@ -3,12 +3,23 @@ import PayU from "payu-websdk";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import cors from "cors";
+import mongoose from "mongoose";
+import Payment from "./modal/payu.js";
 
 dotenv.config();
 
 const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
+
+
+mongoose.connect(process.env.MONGODB_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("MongoDB connected"))
+.catch((err) => console.error("MongoDB error:", err));
+
 
 const payuClient = new PayU(
   {
@@ -24,9 +35,10 @@ app.post("/initiate-payment", async (req, res) => {
 
     let data = {
       isAmountFilledByCustomer: false,
+      key:process.env.MERCHANT_KEY,
       txnid,
       amount,
-      currency: "INR",
+      currency: 'USD',
       productinfo,
       firstname,
       email,
@@ -37,11 +49,26 @@ app.post("/initiate-payment", async (req, res) => {
 
     console.log(data);
 
-    const hashString = `${process.env.MERCHANT_KEY}|${data.txnid}|${data.amount}|${data.productinfo}|${data.firstname}|${data.email}|||||||||||${process.env.MERCHANT_SALT}`;
+
+    const hashString = `${process.env.MERCHANT_KEY}|${data.txnid}|${data.amount}|${data.productinfo}|${data.firstname}|${data.email}|||||||||||${data.currency}|${process.env.MERCHANT_SALT}`;
+    
     const hash = crypto.createHash("sha512").update(hashString).digest("hex");
     data.hash = hash;
 
     let response = await payuClient.paymentInitiate(data);
+
+    // const payment = new Payment({
+    //   txnid,
+    //   amount,
+    //   status:"initiated",
+    //   email,
+    //   phone,
+    //   currency:data.currency,
+    //   productinfo
+    // })
+
+    // await payment.save();
+
 
     console.log(response);
 
@@ -58,7 +85,15 @@ app.post("/verify/:id", async (req, res) => {
     const data = await payuClient.verifyPayment(req.params.id);
     const status = data.transaction_details[req.params.id];
     console.log(status,'status data')
+    let txnid = req.params.id;
+    
+
     if (status.status === "success") {
+    
+      // await Payment.updateOne({txnid},{
+      //   status:status.status,
+      // });
+
       res.redirect("http://localhost:5173/status?status=success");
     } else {
       res.redirect("http://localhost:5173/status?status=fail");

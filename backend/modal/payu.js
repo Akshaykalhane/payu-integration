@@ -1,5 +1,6 @@
 // models/Payment.js
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema(
   {
@@ -10,11 +11,13 @@ const paymentSchema = new mongoose.Schema(
     firstname: { type: String },
     email: { type: String },
     phone: { type: String },
-    status: { type: String }, 
+    status: { type: String,required:true }, 
     transactionDetails: { type: Object }, 
-    date: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Payment", paymentSchema);
+const PaymentModal = mongoose.model("Payment", paymentSchema);
+
+export default PaymentModal;
+
